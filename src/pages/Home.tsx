@@ -6,18 +6,11 @@ import {
   MenubarContent,
   MenubarItem,
 } from "@/components/ui/menubar";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogCancel,
-} from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Link } from "react-router-dom";
+import { ErrorDialog } from "@/components/error-dialog";
+import { FindDialog } from "@/components/find-dialog";
 
 type JSONValue =
   | string
@@ -27,15 +20,29 @@ type JSONValue =
   | JSONValue[]
   | { [key: string]: JSONValue };
 
+type FindMode = "find" | "next" | "prev";
+
 export default function App() {
   const [json, setJson] = useState("");
   const [error, setError] = useState("");
-  const [openDialog, setOpenDialog] = useState(false);
+
+  const [findQuery, setFindQuery] = useState("");
+  const [findMode, setFindMode] = useState<FindMode | null>(null);
+
+  const [showFindDialog, setShowFindDialog] = useState(false);
+  const [showAlertDialog, setShowAlertDialog] = useState(false);
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const showError = (message: string) => {
     setError(message);
-    setOpenDialog(true);
+    setShowAlertDialog(true);
+  };
+
+  const openFindDialog = (mode: FindMode) => {
+    setFindMode(mode);
+    setFindQuery("");
+    setShowFindDialog(true);
   };
 
   const handleFormat = () => {
@@ -64,53 +71,34 @@ export default function App() {
     navigator.clipboard.writeText(json);
   };
 
-  // Find functions - basic prompt find inside the textarea content
-  const handleFind = () => {
-    const query = prompt("Find:");
-    if (!query) return;
+  const executeFind = () => {
+    if (!textareaRef.current || !findQuery) return;
 
-    if (textareaRef.current) {
-      const index = json.indexOf(query);
-      if (index === -1) {
-        showError(`'${query}' not found.`);
-      } else {
-        textareaRef.current.focus();
-        textareaRef.current.setSelectionRange(index, index + query.length);
+    const start = textareaRef.current.selectionStart;
+    let index = -1;
+
+    switch (findMode) {
+      case "find":
+        index = json.indexOf(findQuery);
+        break;
+      case "next":
+        index = json.indexOf(findQuery, start + 1);
+        break;
+      case "prev": {
+        const beforeText = json.slice(0, start);
+        index = beforeText.lastIndexOf(findQuery);
+        break;
       }
     }
-  };
 
-  const handleFindNext = () => {
-    const query = prompt("Find Next:");
-    if (!query) return;
-
-    if (textareaRef.current) {
-      const startPos = textareaRef.current.selectionEnd || 0;
-      const index = json.indexOf(query, startPos);
-      if (index === -1) {
-        showError(`No further occurrence of '${query}' found.`);
-      } else {
-        textareaRef.current.focus();
-        textareaRef.current.setSelectionRange(index, index + query.length);
-      }
+    if (index === -1) {
+      showError(`'${findQuery}' not found.`);
+    } else {
+      textareaRef.current.focus();
+      textareaRef.current.setSelectionRange(index, index + findQuery.length);
     }
-  };
 
-  const handleFindPrevious = () => {
-    const query = prompt("Find Previous:");
-    if (!query) return;
-
-    if (textareaRef.current) {
-      const startPos = textareaRef.current.selectionStart || 0;
-      const beforeText = json.slice(0, startPos);
-      const index = beforeText.lastIndexOf(query);
-      if (index === -1) {
-        showError(`No previous occurrence of '${query}' found.`);
-      } else {
-        textareaRef.current.focus();
-        textareaRef.current.setSelectionRange(index, index + query.length);
-      }
-    }
+    setShowFindDialog(false);
   };
 
   const handleCut = () => {
@@ -197,9 +185,13 @@ export default function App() {
             <MenubarMenu>
               <MenubarTrigger>Find</MenubarTrigger>
               <MenubarContent>
-                <MenubarItem onClick={handleFind}>Find...</MenubarItem>
-                <MenubarItem onClick={handleFindNext}>Find Next</MenubarItem>
-                <MenubarItem onClick={handleFindPrevious}>
+                <MenubarItem onClick={() => openFindDialog("find")}>
+                  Find...
+                </MenubarItem>
+                <MenubarItem onClick={() => openFindDialog("next")}>
+                  Find Next
+                </MenubarItem>
+                <MenubarItem onClick={() => openFindDialog("prev")}>
                   Find Previous
                 </MenubarItem>
               </MenubarContent>
@@ -218,19 +210,20 @@ export default function App() {
             placeholder="Paste or write your JSON here..."
           />
 
-          <AlertDialog open={openDialog} onOpenChange={setOpenDialog}>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Error</AlertDialogTitle>
-                <AlertDialogDescription>{error}</AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel onClick={() => setOpenDialog(false)}>
-                  Close
-                </AlertDialogCancel>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <ErrorDialog
+            open={showAlertDialog}
+            error={error}
+            onClose={() => setShowAlertDialog(false)}
+          />
+
+          <FindDialog
+            open={showFindDialog}
+            mode={findMode}
+            query={findQuery}
+            onChange={setFindQuery}
+            onClose={() => setShowFindDialog(false)}
+            onSubmit={executeFind}
+          />
         </div>
       </div>
 
