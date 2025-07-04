@@ -238,6 +238,10 @@ export default function App() {
         <Link to="/terms-of-service" className="hover:underline mx-2">
           Terms of Service
         </Link>
+        |
+        <Link to="/bagan-map" className="hover:underline mx-2">
+          Bagan Map
+        </Link>
       </footer>
     </div>
   );
