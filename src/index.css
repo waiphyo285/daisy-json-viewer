@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Mono&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Saira:ital,wght@0,100..900;1,100..900&display=swap');
+
 
 @import "tailwindcss";
 @import "tw-animate-css";
@@ -6,7 +7,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  font-family: 'Space Mono', monospace;
+  font-family: "Saira", sans-serif;
   line-height: 1.5;
   font-weight: 400;
 

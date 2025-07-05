@@ -57,10 +57,10 @@ export default function BaganMapPage() {
   return (
     <div className="h-screen w-screen overflow-hidden">
       <div className="absolute top-4 right-4 z-[1000] space-x-2">
-        <Button variant="outline" onClick={() => setSelectedRouteIndex(0)}>
+        <Button variant="secondary" onClick={() => setSelectedRouteIndex(0)}>
           Tour 1
         </Button>
-        <Button variant="outline" onClick={() => setSelectedRouteIndex(1)}>
+        <Button variant="secondary" onClick={() => setSelectedRouteIndex(1)}>
           Tour 2
         </Button>
         <Button
